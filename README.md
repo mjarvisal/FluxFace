@@ -7,8 +7,7 @@ This project is designed for a GitHub audience: it is small, self-contained, and
 ## Gallery
 
 <p align="center">
-  <img src="Pictures/Front.jpg" alt="Front view" width="48%" />
-  <img src="Pictures/Back.jpg" alt="Back view" width="48%" />
+  <img src="Pictures/Clock.png" alt="Clock" width="48%" />
 </p>
 
 <p align="center">
