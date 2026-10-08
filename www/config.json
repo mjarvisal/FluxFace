@@ -1,0 +1,36 @@
+{
+    "Wifi": {
+        "WIFISSID": "",
+        "WIFIPassword": ""
+    },
+    "Limits": {
+        "LimitsNumber": "3",
+        "Limit_1": "1.0",
+        "Limit_1_color": "#00ff00",
+        "Limit_2": "2.0",
+        "Limit_2_color": "#ff9000",
+        "Limit_3": "3.0",
+        "Limit_3_color": "#ffff00",
+        "Limit_4": "4.0",
+        "Limit_4_color": "#00ffff",
+        "Limit_5": "0",
+        "Limit_5_color": "#0000ff",
+        "Limit_6": "0",
+        "Limit_6_color": "#000000",
+        "Limit_7": "0",
+        "Limit_7_color": "#000000",
+        "OverLimit": "#ff0000"
+    },
+    "Display": {
+        "Country": "Finland",
+        "DayBrightness": "80",
+        "CurrentPulsingEnabled": false,
+        "CurrentPulsingAmount": "0",
+        "CurrentPulsingSpeed": "0",
+        "NightModeEnabled": false,
+        "NightBrightness": "14",
+        "NightStart": "20:00",
+        "NightEnd": "06:00",
+        "PartyMode": "0"
+    }
+}

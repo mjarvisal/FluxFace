@@ -1,0 +1,281 @@
+{
+    "version": 1,
+    "data": {
+        "Wifi": {
+            "WIFISSID": {
+                "type": "text",
+                "title": "Wifi SSD (2.4 Ghz only)",
+                "defaultValue": ""
+            },
+            "WIFIPassword": {
+                "type": "password",
+                "title": "Wifi Password",
+                "defaultValue": ""
+            }
+        },
+        "Limits": {
+            "LimitsNumber": {
+                "type": "select",
+                "options": [
+                    {
+                        "value": 1,
+                        "label": "1"
+                    },
+                    {
+                        "value": 2,
+                        "label": "2"
+                    },
+                    {
+                        "value": 3,
+                        "label": "3"
+                    },
+                    {
+                        "value": 4,
+                        "label": "4"
+                    },
+                    {
+                        "value": 5,
+                        "label": "5"
+                    },
+                    {
+                        "value": 6,
+                        "label": "6"
+                    },
+                    {
+                        "value": 7,
+                        "label": "7"
+                    }
+
+                ],
+                "title": "Limits",
+                "info": "Limits number",
+                "defaultValue": 1
+            },
+            "spacer_1": {
+                "type": "title",
+                "title": "Limits"
+            },
+            "Limit_1": {
+                "type": "numeric",
+                "min": 0,
+                "max": 100,
+                "step": 0.1,
+                "defaultValue": "0.0",
+                "title": "1",
+                "info": "c/kWh"
+            },
+            "Limit_1_color": {
+                "type": "color",
+                "defaultValue": "#000000"
+            },
+            "Limit_2": {
+                "type": "numeric",
+                "min": 0,
+                "max": 100,
+                "step": 0.1,
+                "defaultValue": 0.0,
+                "title": "2",
+                "info": "c/kWh"
+            },
+            "Limit_2_color": {
+                "type": "color",
+                "defaultValue": "#000000"
+            },
+            "Limit_3": {
+                "type": "numeric",
+                "min": 0,
+                "max": 100,
+                "step": 0.1,
+                "defaultValue": 0.0,
+                "title": "3",
+                "info": "c/kWh"
+            },
+            "Limit_3_color": {
+                "type": "color",
+                "defaultValue": "#000000"
+            },
+            "Limit_4": {
+                "type": "numeric",
+                "min": 0,
+                "max": 100,
+                "step": 0.1,
+                "defaultValue": 0.0,
+                "title": "4",
+                "info": "c/kWh"
+            },
+            "Limit_4_color": {
+                "type": "color",
+                "defaultValue": "#000000"
+            },
+            "Limit_5": {
+                "type": "numeric",
+                "min": 0,
+                "max": 100,
+                "step": 0.1,
+                "defaultValue": 0.0,
+                "title": "5",
+                "info": "c/kWh"
+            },
+            "Limit_5_color": {
+                "type": "color",
+                "defaultValue": "#000000"
+            },
+            "Limit_6": {
+                "type": "numeric",
+                "min": 0,
+                "max": 100,
+                "step": 0.1,
+                "defaultValue": 0.0,
+                "title": "6",
+                "info": "c/kWh"
+            },
+            "Limit_6_color": {
+                "type": "color",
+                "defaultValue": "#000000"
+            },
+            "Limit_7": {
+                "type": "numeric",
+                "min": 0,
+                "max": 100,
+                "step": 0.1,
+                "defaultValue": 0.0,
+                "title": "7",
+                "info": "c/kWh"
+            },
+            "Limit_7_color": {
+                "type": "color",
+                "defaultValue": "#000000"
+            },
+            "OverLimit": {
+                "title": "Over Limit",
+                "type": "color",
+                "defaultValue": "#ff0000"
+            }
+        },
+        "Display": {
+            "Country": {
+                "type": "select",
+                "options": [
+                    {"value": "Albania", "label": "Albania"},
+                    {"value": "Andorra", "label": "Andorra"},
+                    {"value": "Armenia", "label": "Armenia"},
+                    {"value": "Austria", "label": "Austria"},
+                    {"value": "Azerbaijan", "label": "Azerbaijan"},
+                    {"value": "Belarus", "label": "Belarus"},
+                    {"value": "Belgium", "label": "Belgium"},
+                    {"value": "Bosnia and Herzegovina", "label": "Bosnia and Herzegovina"},
+                    {"value": "Bulgaria", "label": "Bulgaria"},
+                    {"value": "Croatia", "label": "Croatia"},
+                    {"value": "Cyprus", "label": "Cyprus"},
+                    {"value": "Czech Republic", "label": "Czech Republic"},
+                    {"value": "Denmark", "label": "Denmark"},
+                    {"value": "Estonia", "label": "Estonia"},
+                    {"value": "Finland", "label": "Finland"},
+                    {"value": "France", "label": "France"},
+                    {"value": "Georgia", "label": "Georgia"},
+                    {"value": "Germany", "label": "Germany"},
+                    {"value": "Greece", "label": "Greece"},
+                    {"value": "Hungary", "label": "Hungary"},
+                    {"value": "Iceland", "label": "Iceland"},
+                    {"value": "Ireland", "label": "Ireland"},
+                    {"value": "Italy", "label": "Italy"},
+                    {"value": "Kazakhstan", "label": "Kazakhstan"},
+                    {"value": "Kosovo", "label": "Kosovo"},
+                    {"value": "Latvia", "label": "Latvia"},
+                    {"value": "Liechtenstein", "label": "Liechtenstein"},
+                    {"value": "Lithuania", "label": "Lithuania"},
+                    {"value": "Luxembourg", "label": "Luxembourg"},
+                    {"value": "Malta", "label": "Malta"},
+                    {"value": "Moldova", "label": "Moldova"},
+                    {"value": "Monaco", "label": "Monaco"},
+                    {"value": "Montenegro", "label": "Montenegro"},
+                    {"value": "Netherlands", "label": "Netherlands"},
+                    {"value": "North Macedonia", "label": "North Macedonia"},
+                    {"value": "Norway", "label": "Norway"},
+                    {"value": "Poland", "label": "Poland"},
+                    {"value": "Portugal", "label": "Portugal"},
+                    {"value": "Romania", "label": "Romania"},
+                    {"value": "Russia", "label": "Russia"},
+                    {"value": "San Marino", "label": "San Marino"},
+                    {"value": "Serbia", "label": "Serbia"},
+                    {"value": "Slovakia", "label": "Slovakia"},
+                    {"value": "Slovenia", "label": "Slovenia"},
+                    {"value": "Spain", "label": "Spain"},
+                    {"value": "Sweden", "label": "Sweden"},
+                    {"value": "Switzerland", "label": "Switzerland"},
+                    {"value": "Turkey", "label": "Turkey"},
+                    {"value": "Ukraine", "label": "Ukraine"},
+                    {"value": "United Kingdom", "label": "United Kingdom"},
+                    {"value": "Vatican City", "label": "Vatican City"}
+                ],
+                "title": "Select timezone",
+                "info": "Prices always Finland without VAT",
+                "defaultValue": "Finland"
+            },
+            "Title_1": {
+                "type":"title",
+                "title": "Brightness"
+            },
+            "DayBrightness": {
+                "type": "range",
+                "min": 0,
+                "max": 100,
+                "step": 1,
+                "defaultValue": 50,
+                "title": "Brightness",
+                "info": "%"
+            },
+            "CurrentPulsingEnabled": {
+                "type": "switch",
+                "info": "Enable Pulsing Current Hour",
+                "defaultValue": false
+            },
+            "CurrentPulsingAmount": {
+                "type": "range",
+                "min": 0,
+                "max": 100,
+                "step": 1,
+                "defaultValue": "0",
+                "title": "Pulsing brightness decrease amount",
+                "info": "%"
+            },
+            "CurrentPulsingSpeed": {
+                "type": "range",
+                "min": 0,
+                "max": 5,
+                "step": 0.5,
+                "defaultValue": "0",
+                "title": "Pulsing speed",
+                "info": " Seconds"
+            },
+             "NightModeEnabled": {
+                "type": "switch",
+                "info": "Enable Night Mode",
+                "defaultValue": false
+            },
+            "Title_2": {
+                "type":"title",
+                "title": "Night Mode"
+            },
+            "NightBrightness": {
+                "type": "range",
+                "min": 0,
+                "max": 100,
+                "step": 1,
+                "defaultValue": 50,
+                "title": "Brightness",
+                "info": "%"
+            },
+            "NightStart": {
+                "type": "time",
+                "defaultValue": "20:00",
+                "title": "Start Time"
+            },
+            "NightEnd": {
+                "type": "time",
+                "defaultValue": "06:00",
+                "title": "End Time"
+            }
+        }
+    }
+}

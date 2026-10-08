@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FluxFace</title>
+    <link href="bootstrap.min.css" rel="stylesheet">
+    <link href="bootstrap-icons.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg flex-wrap flex-lg-nowrap">
+        <div class="container">
+            <a class="navbar-brand" href="#">FluxFace</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav navbar-nav flex-row flex-wrap bd-navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Home</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav flex-row flex-wrap ms-md-auto">
+                    <li class="nav-item">
+                    <li class="d-flex nav-item dropdown">
+                        <button class="btn btn-link nav-link px-0 px-lg-2 py-2 dropdown-toggle d-flex align-items-end"
+                            id="bd-theme" type="button" aria-expanded="false" data-bs-toggle="dropdown"
+                            data-bs-display="static" aria-label="Toggle theme (auto)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                class="bi bi-palette" viewBox="0 0 16 16">
+                                <path
+                                    d="M8 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m4 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M5.5 7a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m.5 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3" />
+                                <path
+                                    d="M16 8c0 3.15-1.866 2.585-3.567 2.07C11.42 9.763 10.465 9.473 10 10c-.603.683-.475 1.819-.351 2.92C9.826 14.495 9.996 16 8 16a8 8 0 1 1 8-8m-8 7c.611 0 .654-.171.655-.176.078-.146.124-.464.07-1.119-.014-.168-.037-.37-.061-.591-.052-.464-.112-1.005-.118-1.462-.01-.707.083-1.61.704-2.314.369-.417.845-.578 1.272-.618.404-.038.812.026 1.16.104.343.077.702.186 1.025.284l.028.008c.346.105.658.199.953.266.653.148.904.083.991.024C14.717 9.38 15 9.161 15 8a7 7 0 1 0-7 7" />
+                            </svg>
+                            <span class="d-lg-none ms-2" id="bd-theme-text">Toggle theme</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="bd-theme-text">
+                            <li>
+                                <button type="button" class="dropdown-item d-flex align-items-center"
+                                    data-bs-theme-value="light" aria-pressed="false">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                        class="bi bi-sun" viewBox="0 0 16 16">
+                                        <path
+                                            d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6m0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708" />
+                                    </svg> Light
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item d-flex align-items-center"
+                                    data-bs-theme-value="dark" aria-pressed="false">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                        class="bi bi-moon" viewBox="0 0 16 16">
+                                        <path
+                                            d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278M4.858 1.311A7.27 7.27 0 0 0 1.025 7.71c0 4.02 3.279 7.276 7.319 7.276a7.32 7.32 0 0 0 5.205-2.162q-.506.063-1.029.063c-4.61 0-8.343-3.714-8.343-8.29 0-1.167.242-2.278.681-3.286" />
+                                    </svg> Dark
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item d-flex align-items-center active"
+                                    data-bs-theme-value="auto" aria-pressed="true">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                        class="bi bi-shadows" viewBox="0 0 16 16">
+                                        <path
+                                            d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-8 7a.5.5 0 0 1 0-1h3.5q.048 0 .093.009A7 7 0 0 0 12.9 13H8a.5.5 0 0 1 0-1h5.745q.331-.474.581-1H8a.5.5 0 0 1 0-1h6.71a7 7 0 0 0 .22-1H8a.5.5 0 0 1 0-1h7q0-.51-.07-1H8a.5.5 0 0 1 0-1h6.71a7 7 0 0 0-.384-1H8a.5.5 0 0 1 0-1h5.745a7 7 0 0 0-.846-1H8a.5.5 0 0 1 0-1h3.608A7 7 0 1 0 8 15" />
+                                    </svg> Auto
+                                </button>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12">
+                <nav>
+                    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                        <button class="nav-link active" id="nav-1-tab" data-bs-toggle="tab" data-bs-target="#nav-1"
+                            type="button" role="tab" aria-controls="nav-1" aria-selected="true">Wifi</button>
+                        <button class="nav-link" id="nav-5-tab" data-bs-toggle="tab" data-bs-target="#nav-5"
+                            type="button" role="tab" aria-controls="nav-5" aria-selected="false">Limits</button>
+
+                        <button class="nav-link" id="nav-2-tab" data-bs-toggle="tab" data-bs-target="#nav-2"
+                            type="button" role="tab" aria-controls="nav-2" aria-selected="false">Display</button>
+                        <button class="nav-link" id="nav-3-tab" data-bs-toggle="tab" data-bs-target="#nav-3"
+                            type="button" role="tab" aria-controls="nav-3" aria-selected="false">System</button>
+                    </div>
+                </nav>
+                <div class="tab-content" id="nav-tabContent">
+                    <div class="tab-pane fade show active" id="nav-1" role="tabpanel" aria-labelledby="nav-1-tab"
+                        tabindex="1">
+                        <h1 class="h1 my-3">Wifi Settings</h1>
+
+                        <div class="px-3" id="Wifi"></div>
+                        <p style="margin-top: 1rem;">
+                        <button type="button" id="refWifiBtn" class="btn btn-primary btn-lg mt-4 mx-3">Connect to Wifi</button>
+                        </p>
+                    </div>
+
+                    <div class="tab-pane fade" id="nav-5" role="tabpanel" aria-labelledby="nav-5-tab" tabindex="5">
+                        <h1 class="h1 my-3">Limits Settings</h1>
+                        <div class="mb-3 px-3" id="Limits"></div>
+
+                    </div>
+                    <div class="tab-pane fade" id="nav-2" role="tabpanel" aria-labelledby="nav-2-tab" tabindex="2">
+                        <h1 class="h1 my-3">Display Settings</h1>
+                        <div class="mb-3 px-3" id="Display"></div>
+                    </div>
+
+
+                    <div class="tab-pane fade" id="nav-3" role="tabpanel" aria-labelledby="nav-3-tab" tabindex="3">
+                        <h1 class="h1 my-3">System Settings</h1>
+                        <div class="mb-3 px-3" id="System"></div>
+                        <p>
+                        <button type="button" id="refRebootBtn" class="btn btn-primary btn-lg mt-4 mb-4 mx-3">Reboot</button>
+                        </p>
+
+                        <!-- <label for="wifiap" class="form-label">Select wifi accesspoint</label>
+                        <select class="form-select" aria-label="wifiap">
+                            <option value="1">nameless (2.4G)</option>
+                            <option value="2">nameless (5G)</option>
+                        </select>
+
+                        <div class="input-group my-3">
+                            <span class="input-group-text" id="apPass">#</span>
+                            <input type="password" class="form-control" placeholder="Password" aria-label="apPass"
+                                aria-describedby="apPass">
+                        </div> -->
+
+                        <!-- <h1 class="h1 my-3">OTA update</h1>
+                        <select class="form-select mb-3" aria-label="OTA update">
+                            <option value="0" selected>Disabled</option>
+                            <option value="1">Auto</option>
+                            <option value="2">Manual</option>
+                        </select> -->
+                        <h7 class="mx-3">If prices are not updating check Wifi internet connection.</h7>
+                        <p>
+                        <h7 class="mx-3">And if <a href="https://www.sahkotin.fi">www.sahkotin.fi</a> webpage is reachable and running.</h7>
+                        <p>
+
+                        <h1 class="h1 my-3">Firmware</h1>
+                        <p>
+                            <h7 class="mx-3">Local version: <span id="otaCurrentVersion" class="badge text-bg-secondary">…</span></h7>
+                            <br>
+                            <h7 class="mx-3">Latest version: <span id="otaRemoteVersion" class="badge text-bg-secondary">–</span></h7>
+                        </p>
+                        <div id="otaStatus" class="mx-3 my-2"></div>
+                        <div id="otaProgressWrap" class="mx-3 my-2 d-none">
+                            <div class="progress" role="progressbar" aria-label="Update progress" aria-valuemin="0" aria-valuemax="100">
+                                <div id="otaProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%">0%</div>
+                            </div>
+                        </div>
+                        <p>
+                            <button type="button" id="otaCheckBtn" class="btn btn-primary btn-lg mt-2 mb-4 mx-3">Check for updates</button>
+                            <button type="button" id="otaUpdateBtn" class="btn btn-success btn-lg mt-2 mb-4 mx-3 d-none" disabled>Update</button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="bootstrap.bundle.min.js"></script>
+    <script>
+        let global_settings = {};
+        let config = {};
+
+        function ApplyThemeSelect() {
+            const getStoredTheme = () => localStorage.getItem('theme')
+            const setStoredTheme = theme => localStorage.setItem('theme', theme)
+
+            const getPreferredTheme = () => {
+                const storedTheme = getStoredTheme()
+                if (storedTheme) {
+                    return storedTheme
+                }
+
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+            }
+
+            const setTheme = theme => {
+                if (theme === 'auto') {
+                    document.documentElement.setAttribute('data-bs-theme', (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'))
+                } else {
+                    document.documentElement.setAttribute('data-bs-theme', theme)
+                }
+            }
+
+            setTheme(getPreferredTheme())
+
+            const showActiveTheme = (theme, focus = false) => {
+                const themeSwitcher = document.querySelector('#bd-theme')
+
+                if (!themeSwitcher) {
+                    return
+                }
+
+                const themeSwitcherText = document.querySelector('#bd-theme-text')
+                const activeThemeIcon = document.querySelector('.theme-icon-active use')
+                const btnToActive = document.querySelector(`[data-bs-theme-value="${theme}"]`)
+                // const svgOfActiveBtn = btnToActive.querySelector('svg use').getAttribute('href')
+
+                document.querySelectorAll('[data-bs-theme-value]').forEach(element => {
+                    element.classList.remove('active')
+                    element.setAttribute('aria-pressed', 'false')
+                })
+
+                btnToActive.classList.add('active')
+                btnToActive.setAttribute('aria-pressed', 'true')
+                // activeThemeIcon.setAttribute('href', svgOfActiveBtn)
+                const themeSwitcherLabel = `${themeSwitcherText.textContent} (${btnToActive.dataset.bsThemeValue})`
+                themeSwitcher.setAttribute('aria-label', themeSwitcherLabel)
+
+                if (focus) {
+                    themeSwitcher.focus()
+                }
+            }
+
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                const storedTheme = getStoredTheme()
+                if (storedTheme !== 'light' && storedTheme !== 'dark') {
+                    setTheme(getPreferredTheme())
+                }
+            })
+
+            window.addEventListener('DOMContentLoaded', () => {
+                showActiveTheme(getPreferredTheme())
+
+                document.querySelectorAll('[data-bs-theme-value]')
+                    .forEach(toggle => {
+                        toggle.addEventListener('click', () => {
+                            const theme = toggle.getAttribute('data-bs-theme-value')
+                            setStoredTheme(theme)
+                            setTheme(theme)
+                            showActiveTheme(theme, true)
+                        })
+                    })
+            })
+        }
+
+        document.getElementById('refWifiBtn').addEventListener('click', async function () {
+        const url = "/api/wifi";
+        // Perform GET request
+        const WifiSSID = document.querySelector('#WIFISSID').value??"";
+        const WifiPassword = document.querySelector('#WIFIPassword').value??"";
+        SetSettings("WIFISSID", WifiSSID);
+        SetSettings("WIFIPassword", WifiPassword);
+        await SendSettings();
+        fetch(url, { method: 'GET' })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+        });
+
+        document.getElementById('refRebootBtn').addEventListener('click', function () {
+        
+        const url = "/api/reboot";
+        // Perform GET request
+        fetch(url, { method: 'GET' })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+        });
+
+        let otaPollTimer = null;
+
+        function OtaShowStatus(message, type = "secondary") {
+            const el = document.getElementById('otaStatus');
+            if (!el) return;
+            el.innerHTML = message ? `<span class="text-${type}">${message}</span>` : "";
+        }
+
+        function OtaShowProgress(show, percent) {
+            const wrap = document.getElementById('otaProgressWrap');
+            const bar = document.getElementById('otaProgressBar');
+            if (!wrap || !bar) return;
+            wrap.classList.toggle('d-none', !show);
+            if (show) {
+                const p = (percent >= 0 && percent <= 100) ? percent : 0;
+                bar.style.width = `${p}%`;
+                bar.textContent = `${p}%`;
+            }
+        }
+
+        async function OtaCheck() {
+            const checkBtn = document.getElementById('otaCheckBtn');
+            const updateBtn = document.getElementById('otaUpdateBtn');
+            const remote = document.getElementById('otaRemoteVersion');
+
+            checkBtn.disabled = true;
+            OtaShowStatus("Checking for updates…", "secondary");
+            try {
+                const res = await fetch("/api/ota/check", { method: 'GET' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+
+                if (data.current) {
+                    document.getElementById('otaCurrentVersion').textContent = data.current;
+                }
+                remote.textContent = data.remote || "–";
+
+                if (data.error) {
+                    OtaShowStatus(data.error, "danger");
+                    updateBtn.classList.add('d-none');
+                    updateBtn.disabled = true;
+                } else if (data.available) {
+                    OtaShowStatus(`Update available: ${data.remote}`, "success");
+                    updateBtn.classList.remove('d-none');
+                    updateBtn.disabled = false;
+                } else {
+                    OtaShowStatus("You are running the latest firmware.", "success");
+                    updateBtn.classList.add('d-none');
+                    updateBtn.disabled = true;
+                }
+            } catch (e) {
+                OtaShowStatus("Could not check for updates. Check the connection.", "danger");
+            } finally {
+                checkBtn.disabled = false;
+            }
+        }
+
+        function OtaPollStatus() {
+            otaPollTimer = setInterval(async () => {
+                try {
+                    const res = await fetch("/api/ota/status", { method: 'GET' });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+
+                    if (data.state === "downloading") {
+                        OtaShowProgress(true, data.progress);
+                        OtaShowStatus(data.message || "Downloading firmware…", "secondary");
+                    } else if (data.state === "success") {
+                        clearInterval(otaPollTimer);
+                        OtaShowProgress(true, 100);
+                        OtaShowStatus("Update complete. The device is rebooting…", "success");
+                    } else if (data.state === "error") {
+                        clearInterval(otaPollTimer);
+                        OtaShowProgress(false, 0);
+                        OtaShowStatus(data.message || "Update failed.", "danger");
+                        document.getElementById('otaCheckBtn').disabled = false;
+                    }
+                } catch (e) {
+                    // Device may be rebooting after a successful update; stop polling quietly.
+                    clearInterval(otaPollTimer);
+                }
+            }, 1000);
+        }
+
+        async function OtaUpdate() {
+            const checkBtn = document.getElementById('otaCheckBtn');
+            const updateBtn = document.getElementById('otaUpdateBtn');
+            updateBtn.disabled = true;
+            checkBtn.disabled = true;
+            OtaShowStatus("Starting update…", "secondary");
+            OtaShowProgress(true, 0);
+            try {
+                const res = await fetch("/api/ota/update", { method: 'POST' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (!data.started) {
+                    OtaShowStatus(data.error || "Could not start the update.", "danger");
+                    OtaShowProgress(false, 0);
+                    checkBtn.disabled = false;
+                    return;
+                }
+                OtaPollStatus();
+            } catch (e) {
+                OtaShowStatus("Could not start the update.", "danger");
+                OtaShowProgress(false, 0);
+                checkBtn.disabled = false;
+            }
+        }
+
+        async function OtaLoadCurrentVersion() {
+            try {
+                const res = await fetch("/api/ota/check", { method: 'GET' });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.current) {
+                    document.getElementById('otaCurrentVersion').textContent = data.current;
+                }
+                const remote = document.getElementById('otaRemoteVersion');
+                if (!data.error && data.remote) {
+                    remote.textContent = data.remote;
+                    if (data.available) {
+                        OtaShowStatus(`Update available: ${data.remote}`, "success");
+                        const updateBtn = document.getElementById('otaUpdateBtn');
+                        updateBtn.classList.remove('d-none');
+                        updateBtn.disabled = false;
+                    }
+                }
+            } catch (e) {
+                // Ignore; the user can press "Check for updates" manually.
+            }
+        }
+
+        document.getElementById('otaCheckBtn').addEventListener('click', OtaCheck);
+        document.getElementById('otaUpdateBtn').addEventListener('click', OtaUpdate);
+
+        function togglePasswordVisibility(inputId, toggleIconId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleIcon = document.getElementById(toggleIconId);
+            
+            if (passwordInput.type === 'password') {
+                // Show the password
+                passwordInput.type = 'text';
+                // Change the icon to 'eye' (open)
+                toggleIcon.classList.remove('bi-eye-slash');
+                toggleIcon.classList.add('bi-eye');
+            } else {
+                // Hide the password
+                passwordInput.type = 'password';
+                // Change the icon to 'eye-slash' (closed)
+                toggleIcon.classList.remove('bi-eye');
+                toggleIcon.classList.add('bi-eye-slash');
+            }
+        }
+
+        async function FetchSettings() {
+            const data = await fetch("settings.json");
+            global_settings = await data.json();
+            const data2 = await fetch("config.json");
+            config = await data2.json();
+        }
+
+        function GenTextSetting(section, key, setting) {
+            return `
+                <h3 class="my-3">${setting.title ?? ""}</h3>
+                <input onchange="SaveSettings('${key}', this.value);" id="${key}" class="form-control" type="text" value="${config[section][key] ?? setting.defaultValue ?? "n/a"}" />
+            `;
+        }
+
+        function GenPasswordSetting(section, key, setting) {
+            // 1. Define the unique IDs for the input and the toggle icon
+            const toggleIconId = `${key}_icon`;
+            
+            return `
+                <h3 class="my-3">${setting.title ?? ""}</h3>
+                
+                <div class="input-group my-1">
+                    <input 
+                        onchange="SaveSettings('${key}', this.value);" 
+                        id="${key}" 
+                        class="form-control" 
+                        type="password"  value="${config[section][key] ?? setting.defaultValue ?? ""}" 
+                        placeholder="Enter password"
+                    />
+                    <button 
+                        class="btn btn-outline-secondary" 
+                        type="button" 
+                        onclick="togglePasswordVisibility('${key}', '${toggleIconId}')" >
+                        <i class="bi bi-eye-slash" id="${toggleIconId}"></i> </button>
+                </div>
+            `;
+        }
+
+
+        function GenSelectSetting(section, key, setting) {
+            let options = "";
+            for (const opt of setting.options) {
+                let selected = "";
+                if (opt.value == config[section][key]) {
+                    selected = "selected";
+                }
+                options += `<option value="${opt.value}" ${selected}>${opt.label}</option>`;
+            }
+
+            return `
+            <h3 class="mt-4 my-2">${setting.title ?? ""}</h3>
+            <label for="${key}" class="form-label">${setting.info ?? ""}</label>
+            <select onchange="SaveSettings('${key}', this.value);" id="${key}" class="form-select" aria-label="${key}">
+                ${options}
+            </select>
+            `;
+        }
+
+        function GenColorSetting(section, key, setting) {
+            let info = "";
+            if (setting.title) {
+                info += `<h3 class="mt-4 mb-2">${setting.title ?? ""}</h3>`;
+            }
+            if (setting.info) {
+                info += `<label for="${key}" class="form-label">${setting.info ?? ""}</label>`;
+            }
+
+            return `
+            ${info}
+            <input onchange="SaveSettings('${key}', this.value);" id="${key} name="${key} type="color" class="form-control form-control-lg" value="${config[section][key] ?? setting.defaultValue ?? "#000000"}" aria-label="${key}">
+            `;
+        }
+
+        function GenNumericSetting(section, key, setting) {
+            return `
+            <div class="input-group my-3">
+                <span class="input-group-text">${setting.title}</span>
+                <input onchange="SaveSettings('${key}', this.value);" id="${key}" name="${key}" type="number" min="${setting.min}" max="${setting.max}" step="${setting.step}"class="form-control" value="${config[section][key] ?? setting.defaultValue ?? "-1"}" aria-label="${key}">
+                <span class="input-group-text">${setting.info}</span>
+            </div>`;
+        }
+
+
+        function GenTitle(section, key, setting) {
+            return `<h3 class="mt-3">${setting.title ?? ""}</h3>`;
+        }
+
+        function GenTimeSetting(section, key, setting) {
+            return `
+               <label for="${key}" class="form-label">${setting.title}</label>
+               <input onchange="SaveSettings('${key}', this.value);" id="${key} name="${key}" type="time" aria-label="${key}" class="form-control" value="${config[section][key] ?? setting.defaultValue ?? "00:00"}" />
+               `;
+        }
+
+        function GenSwitchSetting(section, key, setting) {
+            let checked = "";
+            const value = config[section][key] ?? setting.defaultValue ?? false;
+            if (value) {
+                checked = "checked";
+            }
+            return `
+            <div class="form-check form-switch">
+                <input onchange="SaveSettings('${key}', this.checked);"  class="form-check-input" type="checkbox" role="switch" id="${key}" ${checked}>
+                <label class="form-check-label" for="${key}">${setting.info}</label>
+            </div>`;
+        }
+
+        function GenRangeSetting(section, key, setting) {
+            const value = config[section][key] ?? setting.defaultValue ?? 0;
+            return `
+            <label for="${key}" class="form-label">${setting.title}: <output for="${key}" id="${key}Value"></output>${setting.info}</label>
+            <input onchange="SaveSettings('${key}', this.value);" id="${key}" type="range" aria-label="${key}" class="form-range" min="${setting.min}" max="${setting.max}" step="${setting.step}" value="${value}">
+            `;
+        }
+
+        function ApplyRange(key) {
+            const Input = document.getElementById(key);
+            const Output = document.getElementById(key + 'Value');
+
+            // Set initial value
+            Output.textContent = Input.value;
+
+            Input.addEventListener('input', function () {
+                Output.textContent = this.value;
+            });
+        }
+
+        async function SendSettings() {
+            const data = await fetch("/api/settings", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(config)
+            });
+        }
+
+        function SetSettings(key, value) {
+            for (const id in config) {
+                const section = config[id];
+                for (const name in section) {
+                    if (name === key) {
+                        section[name] = value;
+                        break;
+                    }
+                }
+            }
+        }
+
+        async function SaveSettings(key, value) {
+            SetSettings(key, value);
+
+            await SendSettings();
+            // jos tarvii debuggaa mitä sun appsi palauttaa, niin tällä onnistuu:
+            //  console.log(await data.text());
+        }
+
+
+
+        function GenSettings(elem, section) {
+            elem.innerHTML = "";
+            const data = global_settings.data[section];
+            for (const key in data) {
+
+                const setting = data[key];
+                switch (setting.type) {
+                    case "title": {
+                        elem.innerHTML += GenTitle(section, key, setting);
+                        break;
+                    }
+                    case "text": {
+                        elem.innerHTML += GenTextSetting(section, key, setting);
+                        break;
+                    }
+                    case "select": {
+                        elem.innerHTML += GenSelectSetting(section, key, setting);
+                        break;
+                    }
+                    case "password": {
+                        elem.innerHTML += GenPasswordSetting(section, key, setting);
+                        break;
+                    }
+                    case "numeric": {
+                        elem.innerHTML += GenNumericSetting(section, key, setting);
+                        break;
+                    }
+                    case "color": {
+                        elem.innerHTML += GenColorSetting(section, key, setting);
+                        break;
+                    }
+                    case "time": {
+                        elem.innerHTML += GenTimeSetting(section, key, setting);
+                        break;
+                    }
+                    case "switch": {
+                        elem.innerHTML += GenSwitchSetting(section, key, setting);
+                        break;
+                    }
+                    case "range": {
+                        elem.innerHTML += GenRangeSetting(section, key, setting);
+                        setTimeout(() => ApplyRange(key), 500);
+                        break;
+                    }
+                }
+            }
+        }
+
+        async function render() {
+            const WifiElem = document.querySelector("#Wifi");
+            const LimitsElem = document.querySelector("#Limits");
+            const DisplayElem = document.querySelector("#Display");
+
+            GenSettings(WifiElem, "Wifi");
+            GenSettings(LimitsElem, "Limits");
+            GenSettings(DisplayElem, "Display");
+
+        }
+
+        (async () => {
+            'use strict'
+            ApplyThemeSelect();
+            await FetchSettings();
+            render();
+            OtaLoadCurrentVersion();
+        })();
+
+
+
+    </script>
+</body>
+
+</html>
