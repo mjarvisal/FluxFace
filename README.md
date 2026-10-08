@@ -55,7 +55,7 @@ Typical setup:
 
 ### Prerequisites
 
-Install the ESP-IDF toolchain and configure your environment according to the official ESP-IDF documentation.
+Install ESP-IDF **v5.5.1** and configure your environment according to the official ESP-IDF documentation. This project requires that version.
 
 ### Build
 
