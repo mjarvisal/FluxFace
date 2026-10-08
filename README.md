@@ -36,7 +36,7 @@ The firmware is built around an ESP32/ESP32-S3 class device and a 5V-powered SK6
 
 Typical setup:
 
-- ESP32 or ESP32-S3 development board
+- ESP32 or ESP32-S3 development board (the Olimex ESP32-S3-WROOM-1-N8R8 has 8 MB flash)
 - 48-LED RGBW LED strip (for example SK6812)
 - 5V power supply sized for the strip
 - Data wire connected to GPIO 16
@@ -47,7 +47,8 @@ Typical setup:
 - `main/` — application firmware, Wi‑Fi handling, REST API, pricing logic, and LED rendering
 - `www/` — static files served by the device for local configuration
 - `build/` — generated ESP-IDF build output
-- `sdkconfig` and `CMakeLists.txt` — build configuration
+- `sdkconfig.defaults` — tracked ESP-IDF defaults, including the 8 MB flash size and custom `partitions.csv` layout
+- `sdkconfig` and `CMakeLists.txt` — local/generated and project build configuration
 - `version.txt` — firmware version used for OTA checks
 
 ## Getting started
@@ -66,6 +67,8 @@ idf.py build
 ```
 
 If your hardware uses a different ESP32 variant, adjust the target accordingly.
+
+The generated `sdkconfig` is intentionally not tracked. Project-wide defaults are kept in `sdkconfig.defaults`, which is tracked and configures the 8 MB flash size and custom partition table required by this project. ESP-IDF uses these defaults when generating the local `sdkconfig`; existing local selections are preserved.
 
 ### Flash
 
@@ -120,4 +123,3 @@ See the full license:
 https://polyformproject.org/licenses/noncommercial/1.0.0
 
 Copyright © 2026 Markus Järvisalo
-

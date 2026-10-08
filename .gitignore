@@ -3,6 +3,7 @@ managed_components/
 dependencies.lock
 sdkconfig
 sdkconfig.*
+!sdkconfig.defaults
 .vscode/
 cpp*
 .*
