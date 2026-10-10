@@ -3,7 +3,6 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "freertos/semphr.h"
 
 #include "esp_log.h"
 #include "esp_system.h"
@@ -14,6 +13,7 @@
 #include "esp_crt_bundle.h"
 
 #include "ota.h"
+#include "mutex.h"
 
 static const char *TAG = "ota";
 
@@ -22,31 +22,20 @@ static const char *TAG = "ota";
  * which chains to a root already present in the ESP-IDF certificate bundle. */
 #define OTA_FIRMWARE_URL "https://kello.xn--jrvisalo-0za.fi/kello.update"
 
-/* Shared OTA status, guarded by s_lock. */
-static SemaphoreHandle_t s_lock = NULL;
+/* Shared OTA status, guarded by MUTEX_TYPE_OTA. */
 static ota_state_t s_state = OTA_STATE_IDLE;
 static int s_progress = -1;
 static char s_message[96] = {0};
 
-static void ota_lock_init(void)
-{
-    if (s_lock == NULL) {
-        s_lock = xSemaphoreCreateMutex();
-    }
-}
-
 static void ota_set_status(ota_state_t state, int progress, const char *message)
 {
-    if (s_lock == NULL) {
-        return;
-    }
-    xSemaphoreTake(s_lock, portMAX_DELAY);
+    mutex_lock(MUTEX_TYPE_OTA);
     s_state = state;
     s_progress = progress;
     if (message != NULL) {
         strlcpy(s_message, message, sizeof(s_message));
     }
-    xSemaphoreGive(s_lock);
+    mutex_unlock(MUTEX_TYPE_OTA);
 }
 
 void ota_get_current_version(char *dst, size_t dst_len)
@@ -60,8 +49,7 @@ void ota_get_current_version(char *dst, size_t dst_len)
 
 void ota_get_status(ota_state_t *state, int *progress, char *message, size_t message_len)
 {
-    ota_lock_init();
-    xSemaphoreTake(s_lock, portMAX_DELAY);
+    mutex_lock(MUTEX_TYPE_OTA);
     if (state != NULL) {
         *state = s_state;
     }
@@ -71,7 +59,7 @@ void ota_get_status(ota_state_t *state, int *progress, char *message, size_t mes
     if (message != NULL && message_len > 0) {
         strlcpy(message, s_message, message_len);
     }
-    xSemaphoreGive(s_lock);
+    mutex_unlock(MUTEX_TYPE_OTA);
 }
 
 esp_err_t ota_check_update(ota_check_result_t *result)
@@ -80,7 +68,6 @@ esp_err_t ota_check_update(ota_check_result_t *result)
         return ESP_ERR_INVALID_ARG;
     }
 
-    ota_lock_init();
     memset(result, 0, sizeof(*result));
     ota_get_current_version(result->current, sizeof(result->current));
 
@@ -204,16 +191,14 @@ static void ota_update_task(void *arg)
 
 esp_err_t ota_start_update(void)
 {
-    ota_lock_init();
-
-    xSemaphoreTake(s_lock, portMAX_DELAY);
+    mutex_lock(MUTEX_TYPE_OTA);
     bool busy = (s_state == OTA_STATE_CHECKING || s_state == OTA_STATE_DOWNLOADING);
     if (!busy) {
         s_state = OTA_STATE_DOWNLOADING;
         s_progress = 0;
         strlcpy(s_message, "Starting download", sizeof(s_message));
     }
-    xSemaphoreGive(s_lock);
+    mutex_unlock(MUTEX_TYPE_OTA);
 
     if (busy) {
         return ESP_ERR_INVALID_STATE;

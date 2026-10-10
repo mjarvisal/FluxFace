@@ -11,7 +11,8 @@ typedef struct mutex_t mutex_t;
 
 mutex_t mutexes[MUTEX_TYPE_COUNT] = {
     {MUTEX_TYPE_FILE, NULL},
-    {MUTEX_TYPE_LED_STRIP, NULL}
+    {MUTEX_TYPE_LED_STRIP, NULL},
+    {MUTEX_TYPE_OTA, NULL}
 };
 
 void mutex_init ( void )
