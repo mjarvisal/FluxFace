@@ -1,6 +1,3 @@
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
 #include <inttypes.h>
 #include <string.h>
 
@@ -9,17 +6,11 @@
 #include "esp_log.h"
 #include "lwip/sockets.h"
 
-#if CONFIG_HEAP_TASK_TRACKING
-#include "esp_heap_task_info.h"
-#endif
-
 #if CONFIG_HEAP_TRACING_STANDALONE
 #include "esp_heap_trace.h"
 #endif
 
 #include "network_diag.h"
-
-#define MONITOR_INTERVAL_MS 60000
 
 static const char *TAG = "mon";
 
@@ -126,58 +117,6 @@ void network_diag_log_delta(const char *operation,
              after->open_sockets - before->open_sockets);
 }
 
-#if CONFIG_HEAP_TASK_TRACKING
-static void log_task_heap_usage(void)
-{
-    enum { MAX_TRACKED_TASKS = 24 };
-    heap_task_totals_t totals[MAX_TRACKED_TASKS] = {0};
-    size_t total_count = 0;
-    heap_task_info_params_t params = {
-        .caps = {0},
-        .mask = {0},
-        .tasks = NULL,
-        .num_tasks = 0,
-        .totals = totals,
-        .num_totals = &total_count,
-        .max_totals = MAX_TRACKED_TASKS,
-        .blocks = NULL,
-        .max_blocks = 0,
-    };
-
-    (void)heap_caps_get_per_task_info(&params);
-    for (size_t i = 0; i < total_count; ++i) {
-        const char *name = pcTaskGetName(totals[i].task);
-        ESP_LOGI(TAG, "task_heap task=%s current=%zu blocks=%zu",
-                 name != NULL ? name : "deleted",
-                 totals[i].size[0], totals[i].count[0]);
-    }
-}
-#endif
-
-#if CONFIG_FREERTOS_USE_TRACE_FACILITY && CONFIG_FREERTOS_USE_STATS_FORMATTING_FUNCTIONS
-static void log_task_list(void)
-{
-    static char task_list[2048];
-    vTaskList(task_list);
-    ESP_LOGI(TAG, "tasks:\n%s", task_list);
-}
-#endif
-
-static void monitor_task(void *arg)
-{
-    (void)arg;
-    for (;;) {
-        (void)network_diag_snapshot("periodic");
-#if CONFIG_HEAP_TASK_TRACKING
-        log_task_heap_usage();
-#endif
-#if CONFIG_FREERTOS_USE_TRACE_FACILITY && CONFIG_FREERTOS_USE_STATS_FORMATTING_FUNCTIONS
-        log_task_list();
-#endif
-        vTaskDelay(pdMS_TO_TICKS(MONITOR_INTERVAL_MS));
-    }
-}
-
 esp_err_t network_diag_start(void)
 {
 #if CONFIG_HEAP_TRACING_STANDALONE
@@ -190,10 +129,6 @@ esp_err_t network_diag_start(void)
     }
 #endif
 
-    if (xTaskCreate(monitor_task, "heap_monitor", 4096, NULL, 1, NULL) != pdPASS) {
-        ESP_LOGE(TAG, "Failed to create heap monitor task");
-        return ESP_ERR_NO_MEM;
-    }
     return ESP_OK;
 }
 
