@@ -7,3 +7,4 @@ sdkconfig.*
 .vscode/
 cpp*
 .*
+*.ps1
