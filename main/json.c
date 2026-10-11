@@ -1,38 +1,35 @@
-
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
 #include "json.h"
 #include "esp_err.h"
 
-#include "config.h"
-
 #include "debug.h"
 
-time_t my_timegm(struct tm *tm) {
-    time_t ret;
-    // 1. Save the current TZ environment variable
-    config_t *config = CONFIG_config_file();
-    
-    // 2. Temporarily set the TZ environment variable to UTC/GMT
-    // The empty string "" or "GMT0" works to set UTC/GMT
-    setenv("TZ", "GMT0", 1); 
-    
-    // 3. Update the C library's time zone data
-    tzset(); 
+static bool is_leap_year(int year)
+{
+    return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+}
 
-    // 4. Call mktime. Since TZ is set to GMT, mktime will treat 'tm' as UTC
-    // and return a time_t that is correct for UTC.
-    ret = mktime(tm); 
+static int days_in_month(int year, int month)
+{
+    static const int days[] = {31, 28, 31, 30, 31, 30,
+                               31, 31, 30, 31, 30, 31};
+    return days[month - 1] + (month == 2 && is_leap_year(year));
+}
 
-    // 5. Restore the original TZ setting
-    setenv("TZ", config->timezones_info.TZ, 1);
-    
-    // 6. Restore the C library's original time zone data
-    tzset(); 
-    
-    return ret;
+static int64_t days_from_epoch(int year, unsigned month, unsigned day)
+{
+    year -= month <= 2;
+    int era = (year >= 0 ? year : year - 399) / 400;
+    unsigned year_of_era = (unsigned)(year - era * 400);
+    unsigned adjusted_month = month > 2 ? month - 3 : month + 9;
+    unsigned day_of_year = (153 * adjusted_month + 2) / 5 + day - 1;
+    unsigned day_of_era = year_of_era * 365 + year_of_era / 4 -
+                          year_of_era / 100 + day_of_year;
+    return (int64_t)era * 146097 + day_of_era - 719468;
 }
 
 // Parse ISO 8601 UTC string into struct tm and time_t
@@ -41,36 +38,50 @@ int parse_iso8601_utc(const char *iso_str, struct tm *out_tm, time_t *out_time) 
         return -1; // Invalid arguments
     }
 
-    // Temporary variables
     int year, month, day, hour, minute, second, millisecond;
     char tz_char;
 
-    // Parse the string (expecting format: YYYY-MM-DDTHH:MM:SS.sssZ)
     if (sscanf(iso_str, "%4d-%2d-%2dT%2d:%2d:%2d.%3d%c",
-               &year, &month, &day, &hour, &minute, &second, &millisecond, &tz_char) < 7) {
+               &year, &month, &day, &hour, &minute, &second, &millisecond, &tz_char) != 8 ||
+        iso_str[strlen(iso_str) - 1] != 'Z') {
         return -2; // Parsing failed
     }
 
     if (tz_char != 'Z') {
         return -3; // Only UTC 'Z' supported in this example
     }
+    if (month < 1 || month > 12 || day < 1 ||
+        day > days_in_month(year, month) || hour < 0 || hour > 23 ||
+        minute < 0 || minute > 59 || second < 0 || second > 59 ||
+        millisecond < 0 || millisecond > 999) {
+        return -2;
+    }
 
-    // Fill struct tm (UTC)
     memset(out_tm, 0, sizeof(struct tm));
-    out_tm->tm_year = year - 1900; // tm_year is years since 1900
-    out_tm->tm_mon  = month - 1;   // tm_mon is 0-based
+    out_tm->tm_year = year - 1900;
+    out_tm->tm_mon  = month - 1;
     out_tm->tm_mday = day;
     out_tm->tm_hour = hour;
     out_tm->tm_min  = minute;
     out_tm->tm_sec  = second;
-    out_tm->tm_isdst = 0; // UTC has no DST
+    out_tm->tm_isdst = 0;
 
-    // Convert to time_t (UTC)
-    *out_time = my_timegm(out_tm);
-
-    if (*out_time == (time_t)-1) {
+    int day_of_year = day - 1;
+    for (int current_month = 1; current_month < month; ++current_month) {
+        day_of_year += days_in_month(year, current_month);
+    }
+    int64_t days = days_from_epoch(year, (unsigned)month, (unsigned)day);
+    out_tm->tm_yday = day_of_year;
+    out_tm->tm_wday = (int)((days + 4) % 7);
+    if (out_tm->tm_wday < 0) {
+        out_tm->tm_wday += 7;
+    }
+    int64_t seconds = days * 86400 + hour * 3600 + minute * 60 + second;
+    time_t converted = (time_t)seconds;
+    if ((int64_t)converted != seconds || converted == (time_t)-1) {
         return -4; // Conversion failed
     }
+    *out_time = converted;
 
     return 0; // Success
 }

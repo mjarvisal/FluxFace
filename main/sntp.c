@@ -4,8 +4,11 @@
 #include "main.h"
 #include "esp_sntp.h"
 #include "config.h"
+#include "mutex.h"
 
 time_t last_sync = 0;
+static bool s_sntp_initialized = false;
+static bool s_time_synchronized = false;
 
 // SNTP Time Sync Notification Callback
 void time_sync_notification_cb(struct timeval *tv) {
@@ -20,24 +23,48 @@ void time_sync_notification_cb(struct timeval *tv) {
     // Example: Get current time and print it as a basic string
     time_t now;
     char strftime_buf[64];
-    const struct tm *timeinfo_ptr;
+    struct tm timeinfo;
     struct config_t *config = CONFIG_config_file();
+
+    if (config == NULL) {
+        ESP_LOGE(TAG, "Cannot set local time: configuration is unavailable");
+        return;
+    }
 
     time(&now); // Get current time (seconds since epoch)
 
     last_sync = now;
 
-    // Set Timezone to UTC for this initial print
-    // For local time, TZ needs to be set correctly before localtime_r
-    setenv("TZ", config->timezones_info.country_string, 1);
-    tzset();
-
-    timeinfo_ptr = localtime(&now);
-    strftime(strftime_buf, sizeof(strftime_buf), "%c", timeinfo_ptr);
+    mutex_lock(MUTEX_TYPE_TIMEZONE);
+    if (localtime_r(&now, &timeinfo) == NULL) {
+        mutex_unlock(MUTEX_TYPE_TIMEZONE);
+        ESP_LOGE(TAG, "Failed to convert synchronized time to local time");
+        return;
+    }
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+    s_time_synchronized = true;
+    mutex_unlock(MUTEX_TYPE_TIMEZONE);
     ESP_LOGI(TAG, "Current time %s after sync: %s", config->timezones_info.country_string, strftime_buf);
 }
 
+bool sntp_time_is_set(void)
+{
+    mutex_lock(MUTEX_TYPE_TIMEZONE);
+    bool synchronized = s_time_synchronized;
+    mutex_unlock(MUTEX_TYPE_TIMEZONE);
+    return synchronized;
+}
+
 void initialize_sntp(void) {
+    mutex_lock(MUTEX_TYPE_TIMEZONE);
+    if (s_sntp_initialized) {
+        mutex_unlock(MUTEX_TYPE_TIMEZONE);
+        ESP_LOGI(TAG, "SNTP client is already initialized");
+        return;
+    }
+    s_sntp_initialized = true;
+    mutex_unlock(MUTEX_TYPE_TIMEZONE);
+
     ESP_LOGI(TAG, "Initializing SNTP");
     esp_sntp_setoperatingmode(ESP_SNTP_OPMODE_POLL);
     // You can use a specific server or a pool

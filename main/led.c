@@ -11,6 +11,7 @@
 #include "main.h"
 #include "led_strip.h"
 #include "led.h"
+#include "mutex.h"
 #include "prices.h"
 #include "config.h"
 #include "debug.h"
@@ -138,13 +139,22 @@ bool prices_and_config_ready ( void )
         return false;
     }
 
+    // LED_Task samples time before entering the LED critical section. Avoid
+    // calling newlib time functions here because this is also called while
+    // that critical section is held.
+    time_t current_time = now;
+    time_t last_update = (price_info != NULL && price_info->last_update != NULL)
+        ? *price_info->last_update
+        : 0;
+
     if ( price_info != NULL &&\
          led_gen_config != NULL &&\
          get_wifi_mode() == WIFI_MODE_STA &&\
          get_system_state() == SYSTEM_STATE_RUNNING &&\
-         (now - *price_info->last_update) > 0 &&\
-         (now - *price_info->last_update) <= 172800 &&\
-         now > 1735689600 ) // after Jan 1, 2025
+         last_update > 0 &&\
+         current_time >= last_update &&\
+         (current_time - last_update) <= 172800 &&\
+         current_time > 1735689600 ) // after Jan 1, 2025
         return true;
     else
     {
@@ -184,14 +194,16 @@ uint calculate_limit_index ( int led_index, uint price_index )
 void debug_log_price_index ( uint i, uint price_index )
 {
 #ifdef DEBUG_ENABLE
-    const struct tm *timeinfo;
+    struct tm timeinfo;
     char strftime_buf[64];
-    const struct tm *timeinfo_now;
+    struct tm timeinfo_now;
     char strftime_now_buf[64];
     
-    timeinfo_now = localtime_r(&now, &timeinfo_now);
-    strftime(strftime_now_buf, sizeof(strftime_now_buf), "%c", timeinfo_now);
+    mutex_lock(MUTEX_TYPE_TIMEZONE);
+    localtime_r(&now, &timeinfo_now);
+    strftime(strftime_now_buf, sizeof(strftime_now_buf), "%c", &timeinfo_now);
     localtime_r(&price_info->prices[price_index].timestamp, &timeinfo);
+    mutex_unlock(MUTEX_TYPE_TIMEZONE);
     strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
     ESP_LOGI(TAG, "Led_index %d: price_index: %d time_price: %s time_now:%s price: %.3f", i, price_index, strftime_buf, strftime_now_buf, price_info->prices[price_index].price_per_kwh);
 #endif
@@ -202,7 +214,9 @@ bool parseTime ( void )
     struct tm TimeNow, NightTimeStart, NightTimeEnd;
     int nowtime, starttime, endtime;
 
+    mutex_lock(MUTEX_TYPE_TIMEZONE);
     localtime_r(&now, &TimeNow);
+    mutex_unlock(MUTEX_TYPE_TIMEZONE);
     if (!led_gen_config) return false;
 
     char temp[3] = {0};
@@ -367,10 +381,13 @@ void LED_Task ( void * pvParameters )
 
     if (get_system_state() == SYSTEM_STATE_RUNNING)
     {
+        bool price_update_in_progress = prices_update_is_in_progress();
         if (prices_and_config_ready())
         {
             struct tm timeinfo;
+            mutex_lock(MUTEX_TYPE_TIMEZONE);
             localtime_r(&now, &timeinfo);
+            mutex_unlock(MUTEX_TYPE_TIMEZONE);
 
             taskENTER_CRITICAL(&my_spinlock);
             for(int i=0; i<LED_STRIP_LED_COUNT; i++)
@@ -378,13 +395,17 @@ void LED_Task ( void * pvParameters )
                 uint price_index = calculate_price_index(i, &timeinfo);
                 uint limit = calculate_limit_index(i, price_index);
 
-                debug_log_price_index (i, price_index );
-
                 set_led_colors(i, price_index, limit, led_strip);
             }
             taskEXIT_CRITICAL(&my_spinlock);
+#ifdef DEBUG_ENABLE
+            for (int i = 0; i < LED_STRIP_LED_COUNT; i++) {
+                uint price_index = calculate_price_index(i, &timeinfo);
+                debug_log_price_index(i, price_index);
+            }
+#endif
         }
-        else // Error color
+        else if (!price_update_in_progress) // Error color
         {   
             taskENTER_CRITICAL(&my_spinlock);
             for(int i=0; i<LED_STRIP_LED_COUNT; i++)

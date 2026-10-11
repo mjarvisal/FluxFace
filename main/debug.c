@@ -7,6 +7,7 @@
 #include "esp_log.h"
 #include "main.h"
 #include "debug.h"
+#include "mutex.h"
 
 void Debug_Task ( void * pvParameters )
 {
@@ -17,7 +18,9 @@ void Debug_Task ( void * pvParameters )
     while (1)
     {
         time(&now);
+        mutex_lock(MUTEX_TYPE_TIMEZONE);
         localtime_r(&now, &timeinfo);
+        mutex_unlock(MUTEX_TYPE_TIMEZONE);
         strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
         ESP_LOGI(TAG, "Current time (UTC) debug: %s", strftime_buf);
         vTaskDelay(pdMS_TO_TICKS(10000));

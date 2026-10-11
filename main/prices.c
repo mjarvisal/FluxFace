@@ -23,6 +23,8 @@
 
 #include "json.h"
 #include "mutex.h"
+#include "network_diag.h"
+#include "wifi.h"
 
 //#define DEBUG_ENABLE
 
@@ -37,6 +39,8 @@ static time_t now = 0;
 
 static prices_t prices[192]; // 2 days of 15min prices
 static time_t last_price_update = 0;
+static portMUX_TYPE s_price_update_mux = portMUX_INITIALIZER_UNLOCKED;
+static bool s_price_update_in_progress = false;
 
 const price_update_info_t price_update_info = {
     .prices = &prices[0],
@@ -44,6 +48,21 @@ const price_update_info_t price_update_info = {
 };
 
 void parse_dates ( char* dst );
+
+static void set_price_update_in_progress(bool in_progress)
+{
+    taskENTER_CRITICAL(&s_price_update_mux);
+    s_price_update_in_progress = in_progress;
+    taskEXIT_CRITICAL(&s_price_update_mux);
+}
+
+bool prices_update_is_in_progress(void)
+{
+    taskENTER_CRITICAL(&s_price_update_mux);
+    bool in_progress = s_price_update_in_progress;
+    taskEXIT_CRITICAL(&s_price_update_mux);
+    return in_progress;
+}
 
 /*
  *  http_native_request() demonstrates use of low level APIs to connect to a server,
@@ -62,28 +81,50 @@ static esp_err_t http_native_request(void)
     esp_http_client_config_t config = {
         .url = uri,
         .crt_bundle_attach = esp_crt_bundle_attach,
+        .timeout_ms = 15000,
     };
     ESP_LOGI(TAG, "HTTP native request =>");
     esp_http_client_handle_t client = esp_http_client_init(&config);
+    if (client == NULL) {
+        ESP_LOGE(TAG, "Failed to initialize HTTP client");
+        return ESP_ERR_NO_MEM;
+    }
 
-    // GET Request
-    esp_http_client_set_method(client, HTTP_METHOD_GET);
+    esp_err_t result = esp_http_client_set_method(client, HTTP_METHOD_GET);
+    if (result != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to set HTTP method: %s", esp_err_to_name(result));
+        esp_http_client_cleanup(client);
+        return result;
+    }
+
     esp_err_t err = esp_http_client_open(client, 0);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
+        result = err;
     } else {
         int content_length = esp_http_client_fetch_headers(client);
         if (content_length < 0) {
-            ESP_LOGE(TAG, "HTTP client fetch headers failed");
+            ESP_LOGE(TAG, "HTTP client fetch headers failed: %d", content_length);
+            result = ESP_FAIL;
         } else {
-            int data_read = esp_http_client_read_response(client, json_buffer, MAX_HTTP_OUTPUT_BUFFER);
+            int status = esp_http_client_get_status_code(client);
+            if (status < 200 || status >= 300) {
+                ESP_LOGE(TAG, "Price server returned HTTP status %d", status);
+                result = ESP_FAIL;
+            }
+            int data_read = result == ESP_OK
+                                ? esp_http_client_read_response(client, json_buffer,
+                                                                MAX_HTTP_OUTPUT_BUFFER)
+                                : -1;
             if (data_read >= 0) {
-                ESP_LOGI(TAG, "HTTP GET Status = %d, content_length = %"PRId64,
-                esp_http_client_get_status_code(client),
-                esp_http_client_get_content_length(client));
-                //ESP_LOG_BUFFER_CHAR(TAG, output_buffer, data_read);
-                // Use POSIX and C standard library functions to work with files.
-                // First create a file.
+                if (data_read == 0) {
+                    ESP_LOGE(TAG, "Price server returned an empty response");
+                    result = ESP_FAIL;
+                }
+            }
+            if (data_read > 0 && result == ESP_OK) {
+                ESP_LOGI(TAG, "HTTP GET Status = %d, content_length = %" PRId64,
+                         status, esp_http_client_get_content_length(client));
                 ESP_LOGI(TAG, "Opening file");
                 mutex_lock(MUTEX_TYPE_FILE);
                 FILE *f = fopen("/www/prices.json", "w");
@@ -91,22 +132,30 @@ static esp_err_t http_native_request(void)
                 {
                         ESP_LOGE(TAG, "Failed to open file for writing");
                         mutex_unlock(MUTEX_TYPE_FILE);
-                        esp_http_client_close(client);
-                        esp_http_client_cleanup(client);
-                        return ESP_FAIL;
+                        result = ESP_FAIL;
+                } else {
+                    if (fwrite(json_buffer, 1, data_read, f) != (size_t)data_read) {
+                        ESP_LOGE(TAG, "Failed to write complete price response");
+                        result = ESP_FAIL;
+                    }
+                    if (fclose(f) != 0) {
+                        ESP_LOGE(TAG, "Failed to close prices.json after writing");
+                        result = ESP_FAIL;
+                    }
+                    mutex_unlock(MUTEX_TYPE_FILE);
+                    if (result == ESP_OK) {
+                        ESP_LOGI(TAG, "File written");
+                    }
                 }
-                fwrite(json_buffer, data_read, 1, f);
-                fclose(f);
-                mutex_unlock(MUTEX_TYPE_FILE);
-                ESP_LOGI(TAG, "File written");
-            } else {
-                ESP_LOGE(TAG, "Failed to read response");
+            } else if (data_read < 0 && result == ESP_OK) {
+                ESP_LOGE(TAG, "Failed to read price response");
+                result = ESP_FAIL;
             }
         }
     }
     esp_http_client_close(client);
     esp_http_client_cleanup(client);
-    return ESP_OK;
+    return result;
 }
 
 const price_update_info_t* get_prices( void )
@@ -138,6 +187,7 @@ static esp_err_t parse_price_data (void) {
 
     // Only re-parse and update the in-memory price structure (and therefore the
     // LEDs) when the file content has actually changed since the last read.
+
     if (total_len == cached_prices_len &&
         memcmp(json_buffer, cached_prices_json, total_len) == 0)
     {
@@ -160,6 +210,7 @@ static esp_err_t parse_price_data (void) {
         ESP_LOGI(TAG, "prices.json changed, price data updated (%u bytes)", (unsigned)total_len);
     }
 #ifdef DEBUG_ENABLE
+    mutex_lock(MUTEX_TYPE_TIMEZONE);
     for (int i=0; i<192; i++) {
         char strftime_buf[64];
         struct tm timeinfo;
@@ -167,6 +218,7 @@ static esp_err_t parse_price_data (void) {
         strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
         ESP_LOGI(TAG, "Price %d: time: %s, price: %.3f", i, strftime_buf, prices[i].price_per_kwh);
     }
+    mutex_unlock(MUTEX_TYPE_TIMEZONE);
 #endif
     return err;
 }
@@ -196,20 +248,40 @@ void Prices_Task ( void * pvParameters )
 
     while (1)
     {
-        time(&now);
-        struct tm timeinfo;
-        gmtime_r(&now, &timeinfo);
-
-        if ((timeinfo.tm_year+1900) > 2024)
+        if (wifi_is_connected() &&
+            get_system_state() == SYSTEM_STATE_RUNNING &&
+            sntp_time_is_set())
         {
-            if (get_wifi_mode() == WIFI_MODE_STA && get_system_state() == SYSTEM_STATE_RUNNING)
-            {
-                if (http_native_request() == ESP_OK)
-                {
-                    parse_price_data();
-                }
-                delay = 60*60000; // 60 minutes
+            if (!mutex_try_lock(MUTEX_TYPE_OUTBOUND_TLS)) {
+                ESP_LOGI(TAG, "Skipping price fetch while another TLS request is active");
+                delay = 60000;
+                vTaskDelay(pdMS_TO_TICKS(delay));
+                continue;
             }
+
+            set_price_update_in_progress(true);
+            time(&now);
+            network_diag_sample_t diag_before = network_diag_snapshot("prices before");
+            network_diag_fetch_begin();
+            esp_err_t fetch_err = http_native_request();
+            mutex_unlock(MUTEX_TYPE_OUTBOUND_TLS);
+            if (fetch_err == ESP_OK)
+            {
+                esp_err_t parse_err = parse_price_data();
+                if (parse_err == ESP_OK) {
+                    delay = 60 * 60000;
+                } else {
+                    ESP_LOGW(TAG, "Price data could not be parsed; retrying in one minute");
+                    delay = 60000;
+                }
+            } else {
+                ESP_LOGW(TAG, "Price fetch failed; retrying in one minute");
+                delay = 60000;
+            }
+            network_diag_fetch_end(&diag_before);
+            set_price_update_in_progress(false);
+        } else {
+            delay = 1000;
         }
         vTaskDelay(pdMS_TO_TICKS(delay));
     }

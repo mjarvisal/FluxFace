@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <fcntl.h>
 #include "esp_http_server.h"
+#include "esp_wifi.h"
 #include "esp_chip_info.h"
 #include "esp_random.h"
 #include "esp_log.h"
@@ -226,6 +227,8 @@ static esp_err_t ota_update_handler(httpd_req_t *req)
     httpd_resp_set_type(req, "application/json");
     if (err == ESP_ERR_INVALID_STATE) {
         httpd_resp_sendstr(req, "{\"started\":false,\"error\":\"An update is already in progress\"}");
+    } else if (err == ESP_ERR_WIFI_NOT_CONNECT) {
+        httpd_resp_sendstr(req, "{\"started\":false,\"error\":\"Wi-Fi is not connected\"}");
     } else if (err != ESP_OK) {
         httpd_resp_sendstr(req, "{\"started\":false,\"error\":\"Could not start the update\"}");
     } else {
@@ -291,6 +294,7 @@ esp_err_t start_rest_server(const char *base_path)
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.uri_match_fn = httpd_uri_match_wildcard;
+    config.lru_purge_enable = true;
     /* The /api/ota/check handler performs a TLS handshake (esp_https_ota_begin)
      * directly in the server task, which needs far more stack than the httpd
      * default (~4 KB). Enlarge it to avoid a stack overflow. */

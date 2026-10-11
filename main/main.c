@@ -14,6 +14,7 @@
 #include "prices.h"
 #include "debug.h"
 #include "mutex.h"
+#include "network_diag.h"
 
 /* TaskHandles */
 TaskHandle_t LEDTaskHandle = NULL;
@@ -23,13 +24,12 @@ TaskHandle_t PricesTaskHandle = NULL;
 void app_main(void)
 {
     init();
-    xTaskCreatePinnedToCore(LED_Task, "LED_task", 2*8192, NULL, 11, &LEDTaskHandle, APP_CPU_NUM);
-    
     mutex_init();
+    xTaskCreatePinnedToCore(LED_Task, "LED_task", 2*8192, NULL, 11, &LEDTaskHandle, APP_CPU_NUM);
     initwifi();
     xTaskCreatePinnedToCore(Prices_Task, "Prices_task", 2*8192, NULL, 10, &PricesTaskHandle, APP_CPU_NUM);
 #ifdef DEBUG_ENABLE
     xTaskCreate(Debug_Task, "Debug_task", 8192, NULL, 2, &DebugTaskHandle);
 #endif
-
+    ESP_ERROR_CHECK(network_diag_start());
 }

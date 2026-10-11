@@ -1,5 +1,5 @@
-idf_component_register(SRCS "system.c" "countries.c" "sntp.c" "json.c" "init.c" "debug.c" "debug_log.c" "led.c" "main.c" "wifi.c" "rest_server.c" "prices.c" "config.c" "ota.c" "mutex.c"
-                       PRIV_REQUIRES esp_wifi esp_http_server json nvs_flash lwip esp_http_client esp-tls app_update esp_https_ota
+idf_component_register(SRCS "system.c" "countries.c" "sntp.c" "json.c" "init.c" "debug.c" "debug_log.c" "led.c" "main.c" "wifi.c" "rest_server.c" "prices.c" "config.c" "ota.c" "mutex.c" "network_diag.c"
+                       PRIV_REQUIRES esp_wifi esp_http_server json nvs_flash lwip esp_http_client esp-tls app_update esp_https_ota heap
                        INCLUDE_DIRS ".")
 
 set(WEB_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../www")

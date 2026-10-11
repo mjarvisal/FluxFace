@@ -20,6 +20,9 @@
 
 #define CONFIGBUFLEN 2048
 
+static bool s_timezone_country_applied = false;
+static enum countries s_applied_country;
+
 config_t gen_config;
 esp_err_t config_updated = ESP_FAIL;
 
@@ -122,12 +125,26 @@ void parse_country_logic(cJSON *key, timezones_t *item)
 {
     DEBUG_PRINTF("Parsing country key: %s\n", key->string);
     enum countries country_enum = get_country_enum_from_string(key->valuestring);
+    const char *country_string = get_country_string_from_enum(country_enum);
+    const char *timezone = get_timezone_string_from_enum(country_enum);
+
+    mutex_lock(MUTEX_TYPE_TIMEZONE);
+    bool country_changed = !s_timezone_country_applied ||
+                           s_applied_country != country_enum;
     item->country_enum = country_enum;
-    strcpy(item->country_string, get_country_string_from_enum(country_enum));
-    strcpy(item->TZ, get_timezone_string_from_enum(country_enum));
+    strlcpy(item->country_string, country_string, sizeof(item->country_string));
+    strlcpy(item->TZ, timezone, sizeof(item->TZ));
     DEBUG_PRINTF("Parsed country: %s, TZstring: %s\n", item->country_string, item->TZ);
-    setenv("TZ", item->TZ, 1);
-    tzset();
+    if (country_changed) {
+        if (setenv("TZ", item->TZ, 1) != 0) {
+            ESP_LOGE(TAG, "Failed to set timezone to %s", item->TZ);
+        } else {
+            tzset();
+            s_applied_country = country_enum;
+            s_timezone_country_applied = true;
+        }
+    }
+    mutex_unlock(MUTEX_TYPE_TIMEZONE);
 }
 
 esp_err_t parse_config_map(cJSON *root, const config_item_t *map, size_t map_size) {

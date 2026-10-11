@@ -69,47 +69,181 @@
 #define MDNS_HOST_NAME "kello"
 
 static int s_retry_num = 0;
+static bool s_netif_initialized = false;
+static bool s_wifi_initialized = false;
+static bool s_wifi_started = false;
+static bool s_wifi_event_handler_registered = false;
+static bool s_wifi_connect_handler_registered = false;
+static bool s_ip_event_handler_registered = false;
+static bool s_mdns_initialized = false;
+static bool s_mdns_service_added = false;
+static esp_netif_t *s_sta_netif = NULL;
+static esp_netif_t *s_ap_netif = NULL;
+static esp_event_handler_instance_t s_wifi_event_handler_instance;
+static esp_event_handler_instance_t s_wifi_connect_handler_instance;
+static esp_event_handler_instance_t s_ip_event_handler_instance;
 
 config_t *wifi_gen_config = NULL;
 
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
 
+static void wifi_connect_event_handler(void *arg, esp_event_base_t event_base,
+                                       int32_t event_id, void *event_data);
+
 static void wifi_event_handler(void* arg, esp_event_base_t event_base,
                                   int32_t event_id, void* event_data){
     DEBUG_PRINTF("Event nr: %ld!\n", event_id);
 }
 
-static void initialise_mdns(void)
+static esp_err_t initialise_mdns(void)
 {
-    //initialize mDNS service
-    ESP_ERROR_CHECK(mdns_init());
-    mdns_hostname_set(MDNS_HOST_NAME);
-    mdns_instance_name_set(MDNS_INSTANCE);
+    esp_err_t err;
+
+    if (!s_mdns_initialized) {
+        err = mdns_init();
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to initialize mDNS: %s", esp_err_to_name(err));
+            return err;
+        }
+        s_mdns_initialized = true;
+    }
+
+    err = mdns_hostname_set(MDNS_HOST_NAME);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to set mDNS hostname: %s", esp_err_to_name(err));
+        return err;
+    }
+    err = mdns_instance_name_set(MDNS_INSTANCE);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to set mDNS instance name: %s", esp_err_to_name(err));
+        return err;
+    }
+
+    if (s_mdns_service_added) {
+        return ESP_OK;
+    }
 
     mdns_txt_item_t serviceTxtData[] = {
         {"chip", CONFIG_IDF_TARGET},
         {"path", "/"}
     };
 
-    (void) mdns_service_add("ESP32-WebServer", "_http", "_tcp", 80, serviceTxtData,
-                                     sizeof(serviceTxtData) / sizeof(serviceTxtData[0]));
+    err = mdns_service_add("ESP32-WebServer", "_http", "_tcp", 80, serviceTxtData,
+                           sizeof(serviceTxtData) / sizeof(serviceTxtData[0]));
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to add mDNS service: %s", esp_err_to_name(err));
+        return err;
+    }
+    s_mdns_service_added = true;
+    return ESP_OK;
 }
 
-void wifi_init_softap ( void )
+static esp_err_t wifi_stack_init(wifi_interface_t interface)
 {
-    esp_netif_init();
-    esp_netif_create_default_wifi_ap();
+    esp_err_t err;
 
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT(); // always start with this
+    if (!s_netif_initialized) {
+        err = esp_netif_init();
+        if (err != ESP_OK) {
+            return err;
+        }
+        s_netif_initialized = true;
+    }
 
-    esp_wifi_init(&cfg);
+    if (interface == WIFI_IF_STA && s_sta_netif == NULL) {
+        s_sta_netif = esp_netif_create_default_wifi_sta();
+        if (s_sta_netif == NULL) {
+            return ESP_ERR_NO_MEM;
+        }
+    }
+    if (interface == WIFI_IF_AP && s_ap_netif == NULL) {
+        s_ap_netif = esp_netif_create_default_wifi_ap();
+        if (s_ap_netif == NULL) {
+            return ESP_ERR_NO_MEM;
+        }
+    }
 
-    esp_event_handler_instance_register(WIFI_EVENT,
-                                                        ESP_EVENT_ANY_ID,
-                                                        &wifi_event_handler,
-                                                        NULL,
-                                                        NULL);
+    if (!s_wifi_initialized) {
+        wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+        err = esp_wifi_init(&cfg);
+        if (err != ESP_OK) {
+            return err;
+        }
+        s_wifi_initialized = true;
+    }
+
+    if (!s_wifi_event_handler_registered) {
+        err = esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
+                                                  &wifi_event_handler, NULL,
+                                                  &s_wifi_event_handler_instance);
+        if (err != ESP_OK) {
+            return err;
+        }
+        s_wifi_event_handler_registered = true;
+    }
+    if (!s_wifi_connect_handler_registered) {
+        err = esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
+                                                  &wifi_connect_event_handler, NULL,
+                                                  &s_wifi_connect_handler_instance);
+        if (err != ESP_OK) {
+            return err;
+        }
+        s_wifi_connect_handler_registered = true;
+    }
+    if (!s_ip_event_handler_registered) {
+        err = esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
+                                                  &wifi_connect_event_handler, NULL,
+                                                  &s_ip_event_handler_instance);
+        if (err != ESP_OK) {
+            return err;
+        }
+        s_ip_event_handler_registered = true;
+    }
+
+    if (s_wifi_event_group == NULL) {
+        s_wifi_event_group = xEventGroupCreate();
+        if (s_wifi_event_group == NULL) {
+            return ESP_ERR_NO_MEM;
+        }
+    }
+    return ESP_OK;
+}
+
+static esp_err_t wifi_start_with_config(wifi_mode_t mode, wifi_interface_t interface,
+                                        wifi_config_t *config)
+{
+    esp_err_t err;
+
+    if (s_wifi_started) {
+        err = esp_wifi_stop();
+        if (err != ESP_OK) {
+            return err;
+        }
+        s_wifi_started = false;
+    }
+
+    err = esp_wifi_set_mode(mode);
+    if (err != ESP_OK) {
+        return err;
+    }
+    err = esp_wifi_set_config(interface, config);
+    if (err != ESP_OK) {
+        return err;
+    }
+    err = esp_wifi_start();
+    if (err == ESP_OK) {
+        s_wifi_started = true;
+    }
+    return err;
+}
+
+esp_err_t wifi_init_softap ( void )
+{
+    esp_err_t err = wifi_stack_init(WIFI_IF_AP);
+    if (err != ESP_OK) {
+        return err;
+    }
 
     wifi_config_t wifi_config = {
         .ap = {
@@ -125,22 +259,27 @@ void wifi_init_softap ( void )
         },
     };
 
-    esp_wifi_set_mode(WIFI_MODE_AP);
-    esp_wifi_set_config(WIFI_IF_AP, &wifi_config);
-    esp_wifi_start();
+    err = wifi_start_with_config(WIFI_MODE_AP, WIFI_IF_AP, &wifi_config);
+    if (err != ESP_OK) {
+        return err;
+    }
     set_wifi_mode(WIFI_MODE_AP);
     set_wifi_state(WIFI_STATE_CONNECTED);
 
     ESP_LOGI(TAG, "wifi_init_softap finished. SSID:%s channel:%d",
              ESP_WIFI_SSID, ESP_WIFI_CHANNEL);
+    return ESP_OK;
 }
 
 static void wifi_connect_event_handler(void* arg, esp_event_base_t event_base,
                                 int32_t event_id, void* event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+        set_wifi_state(WIFI_STATE_CONNECTING);
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        set_wifi_state(WIFI_STATE_DISCONNECTED);
+        xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
         if (s_retry_num < WIFI_MAXIMUM_RETRY) {
             esp_wifi_connect();
             s_retry_num++;
@@ -153,33 +292,20 @@ static void wifi_connect_event_handler(void* arg, esp_event_base_t event_base,
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
         s_retry_num = 0;
+        set_wifi_state(WIFI_STATE_CONNECTED);
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
 }
 
 esp_err_t wifi_init_sta ( void )
 {
-    s_wifi_event_group = xEventGroupCreate();
-
-    ESP_ERROR_CHECK(esp_netif_init());
-
-    esp_netif_create_default_wifi_sta();
-
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-
-    esp_event_handler_instance_t instance_any_id;
-    esp_event_handler_instance_t instance_got_ip;
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
-                                                        ESP_EVENT_ANY_ID,
-                                                        &wifi_connect_event_handler,
-                                                        NULL,
-                                                        &instance_any_id));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
-                                                        IP_EVENT_STA_GOT_IP,
-                                                        &wifi_connect_event_handler,
-                                                        NULL,
-                                                        &instance_got_ip));
+    esp_err_t err = wifi_stack_init(WIFI_IF_STA);
+    if (err != ESP_OK) {
+        return err;
+    }
+    xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT);
+    s_retry_num = 0;
+    set_wifi_state(WIFI_STATE_DISCONNECTED);
 
     wifi_config_t wifi_config = {
         .sta = {
@@ -197,12 +323,14 @@ esp_err_t wifi_init_sta ( void )
     };
     memcpy(&wifi_config.sta.ssid, &wifi_gen_config->WIFISSID, sizeof(wifi_config.sta.ssid));
     memcpy(&wifi_config.sta.password, &wifi_gen_config->WIFIPassword, sizeof(wifi_config.sta.password));
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
-    ESP_ERROR_CHECK(esp_wifi_start() );
+    set_wifi_mode(WIFI_MODE_STA);
+    set_wifi_state(WIFI_STATE_CONNECTING);
+    err = wifi_start_with_config(WIFI_MODE_STA, WIFI_IF_STA, &wifi_config);
+    if (err != ESP_OK) {
+        return err;
+    }
 
     ESP_LOGI(TAG, "wifi_init_sta finished.");
-    set_wifi_mode(WIFI_MODE_STA);
 
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
      * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
@@ -246,13 +374,15 @@ esp_err_t init_wifi ( void )
 
     if (err != ESP_OK) //Wifi connection to external AP error
     {
-        wifi_init_softap();
-        err = ESP_OK;
+        err = wifi_init_softap();
+        if (err != ESP_OK) {
+            return err;
+        }
     }
     if (wifi_is_connected())
     {
         initialize_sntp();
     }
-    initialise_mdns();
+    err = initialise_mdns();
     return err;
 }

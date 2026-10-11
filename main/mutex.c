@@ -12,7 +12,9 @@ typedef struct mutex_t mutex_t;
 mutex_t mutexes[MUTEX_TYPE_COUNT] = {
     {MUTEX_TYPE_FILE, NULL},
     {MUTEX_TYPE_LED_STRIP, NULL},
-    {MUTEX_TYPE_OTA, NULL}
+    {MUTEX_TYPE_OTA, NULL},
+    {MUTEX_TYPE_TIMEZONE, NULL},
+    {MUTEX_TYPE_OUTBOUND_TLS, NULL}
 };
 
 void mutex_init ( void )
@@ -28,6 +30,12 @@ void mutex_lock ( mutex_type_t type )
     if (mutex != NULL) {
         xSemaphoreTake(mutex, portMAX_DELAY);
     }
+}
+
+bool mutex_try_lock ( mutex_type_t type )
+{
+    SemaphoreHandle_t mutex = mutexes[type].mutex;
+    return mutex != NULL && xSemaphoreTake(mutex, 0) == pdTRUE;
 }
 
 void mutex_unlock ( mutex_type_t type )
